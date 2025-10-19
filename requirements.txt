@@ -1,0 +1,6 @@
+# Core dependencies
+llama-cpp-python>=0.2.0
+colorama>=0.4.6
+
+# Optional dependencies
+tqdm>=4.64.0

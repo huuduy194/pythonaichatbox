@@ -1,0 +1,64 @@
+# Python AI Chat (Offline, llama-cpp-python)
+
+Ứng dụng chat AI offline dùng `llama-cpp-python`. Hỗ trợ CLI và GUI (Tkinter).
+
+## Yêu cầu hệ thống
+- Python 3.10+ (khuyến nghị 64-bit)
+- Windows 10/11
+- CPU có hỗ trợ AVX/AVX2 giúp chạy nhanh hơn
+- Đã cài Microsoft Visual C++ Redistributable (thường có sẵn trên Windows mới)
+
+## Cài đặt nhanh
+
+1) Tạo môi trường ảo và cài thư viện:
+```bash
+python -m venv chat_ai_env
+chat_ai_env\Scripts\activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+2) Tải model GGUF và đặt vào `models/`:
+- Mặc định trong `config.py`:
+  - `MODEL_PATH = "models/vietcuna-7b-v3.Q3_K_M.gguf"`
+- Hãy tải đúng file model `.gguf` tương ứng rồi đặt vào thư mục `models/`.
+
+3) Chạy ứng dụng:
+- Chế độ CLI:
+```bash
+python app.py
+```
+
+- Chế độ GUI (Tkinter):
+```bash
+python app.py --gui
+```
+
+## Cấu hình
+Chỉnh các tham số trong `config.py`:
+- `MODEL_PATH`: đường dẫn file model `.gguf`
+- `N_CTX`, `N_THREADS`, `N_BATCH`: cấu hình suy luận
+- `TEMPERATURE`, `TOP_P`, `MAX_TOKENS`: tham số sinh
+- `HISTORY_MAX_TURNS`: số lượt hội thoại ghi nhớ
+- `LOG_DIR`: thư mục ghi log
+
+## Ghi log
+- Log text: trong `logs/` (tạo theo ngày)
+- Log jsonl hội thoại: `logs/chat_YYYY-MM-DD.jsonl`
+
+## Khắc phục sự cố
+- Lỗi “Model file not found”: đảm bảo file `.gguf` đúng tên và đúng thư mục như `config.py`.
+- Lỗi cài `llama-cpp-python`: thử nâng cấp `pip` hoặc dùng Python 64-bit; đảm bảo Visual C++ Redistributable có sẵn.
+- Chậm: tăng `N_THREADS`, giảm `MAX_TOKENS`, dùng model lượng tử thấp hơn (Q3/Q4).
+
+## Phát triển
+Cấu trúc chính:
+- `app.py`: entry point, CLI/GUI
+- `config.py`: cấu hình
+- `core/model_llama_cpp.py`: load model và generate
+- `core/conversation.py`: quản lý lịch sử, build prompt
+- `core/utils.py`: logging, lưu lịch sử
+- `ui/gui_tk.py`: giao diện Tkinter
+
+## License
+MIT (hoặc cập nhật theo nhu cầu)
