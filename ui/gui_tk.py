@@ -32,8 +32,8 @@ class SimpleChatGUI:
         main_frame = tk.Frame(settings, bg='#1a1a1a')
         main_frame.pack(fill=tk.BOTH, expand=True, padx=40, pady=30)
         
-        # Title
-        tk.Label(main_frame, text="Cài Đặt", font=("Segoe UI", 16, "bold"), 
+        # Title với icon
+        tk.Label(main_frame, text="⚙️ Cài Đặt", font=("Segoe UI", 16, "bold"), 
                  bg='#1a1a1a', fg='#e0e0e0').pack(pady=(0, 25))
         
         # Temperature
@@ -65,7 +65,7 @@ class SimpleChatGUI:
             messagebox.showinfo("Thành công", "Đã lưu cài đặt!")
             settings.destroy()
         
-        save_btn = tk.Button(main_frame, text="Lưu", command=save, 
+        save_btn = tk.Button(main_frame, text="💾 Lưu", command=save, 
                              bg='#404040', fg='#e0e0e0', padx=30, pady=10,
                              font=("Segoe UI", 11), relief='flat',
                              cursor='hand2', activebackground='#505050',
@@ -90,7 +90,7 @@ class SimpleChatGUI:
 
         # Tạo cửa sổ dark theme đơn giản
         self.root = tk.Tk()
-        self.root.title("Chat AI")
+        self.root.title("Chatbox AI nhóm 8")
         self.root.geometry("1200x700")
         self.root.configure(bg='#1a1a1a')  # Nền tối
         self.root.minsize(900, 600)
@@ -107,21 +107,21 @@ class SimpleChatGUI:
         # Logo và title
         title_frame = tk.Frame(header, bg='#2d2d2d')
         title_frame.pack(side=tk.LEFT, padx=20, pady=12)
-        tk.Label(title_frame, text="Chat AI", font=("Segoe UI", 16, "bold"), 
+        tk.Label(title_frame, text="💬 Chatbox AI nhóm 8", font=("Segoe UI", 16, "bold"), 
                  fg='#e0e0e0', bg='#2d2d2d').pack(side=tk.LEFT)
         
         button_frame = tk.Frame(header, bg='#2d2d2d')
         button_frame.pack(side=tk.RIGHT, padx=20, pady=12)
         
-        # Settings button đơn giản
-        settings_btn = tk.Button(button_frame, text="Cài Đặt", command=self._show_settings, 
+        # Settings button với icon
+        settings_btn = tk.Button(button_frame, text="⚙️ Cài Đặt", command=self._show_settings, 
                   bg='#404040', fg='#e0e0e0', relief='flat', padx=15, pady=6,
                   font=("Segoe UI", 10), cursor='hand2', bd=0,
                   activebackground='#505050', activeforeground='#ffffff')
         settings_btn.pack(side=tk.RIGHT, padx=(0, 8))
         
-        # Clear button đơn giản
-        clear_btn = tk.Button(button_frame, text="Xóa Tất Cả", command=self._clear_current_chat,
+        # Clear button với icon
+        clear_btn = tk.Button(button_frame, text="🗑️ Xóa Tất Cả", command=self._clear_current_chat,
                   bg='#404040', fg='#e0e0e0', relief='flat', padx=15, pady=6,
                   font=("Segoe UI", 10), cursor='hand2', bd=0,
                   activebackground='#505050', activeforeground='#ffffff')
@@ -136,11 +136,11 @@ class SimpleChatGUI:
         sidebar.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
         sidebar.pack_propagate(False)
 
-        # Sidebar header
+        # Sidebar header với icon
         sidebar_header = tk.Frame(sidebar, bg='#252525', height=40)
         sidebar_header.pack(fill=tk.X)
         sidebar_header.pack_propagate(False)
-        tk.Label(sidebar_header, text="Lịch Sử Chat", font=("Segoe UI", 12, "bold"), 
+        tk.Label(sidebar_header, text="📚 Lịch Sử Chat", font=("Segoe UI", 12, "bold"), 
                  bg='#252525', fg='#e0e0e0').pack(pady=12)
         
         # Scrollbar cho danh sách chat
@@ -158,8 +158,8 @@ class SimpleChatGUI:
         self.conv_list_frame = tk.Frame(self.sidebar_canvas, bg='#252525')
         self.sidebar_canvas.create_window((0, 0), window=self.conv_list_frame, anchor="nw", width=260)
         
-        # Button tạo cuộc trò chuyện mới đơn giản
-        new_chat_btn = tk.Button(sidebar, text="Cuộc trò chuyện mới", command=self._start_new_conversation,
+        # Button tạo cuộc trò chuyện mới với icon
+        new_chat_btn = tk.Button(sidebar, text="➕ Cuộc trò chuyện mới", command=self._start_new_conversation,
                   bg='#404040', fg='#e0e0e0', relief='flat', pady=8, font=("Segoe UI", 10),
                   cursor='hand2', activebackground='#505050', activeforeground='#ffffff', bd=0)
         new_chat_btn.pack(fill=tk.X, padx=8, pady=(0, 8))
@@ -201,8 +201,8 @@ class SimpleChatGUI:
         self.input_entry.bind('<FocusIn>', lambda e: self.input_entry.config(highlightbackground='#606060'))
         self.input_entry.bind('<FocusOut>', lambda e: self.input_entry.config(highlightbackground='#404040'))
         
-        # Send button đơn giản
-        send_btn = tk.Button(input_frame, text="Gửi", command=self._on_send,
+        # Send button với icon
+        send_btn = tk.Button(input_frame, text="➤ Gửi", command=self._on_send,
                   bg='#404040', fg='#e0e0e0', relief='flat', padx=25, pady=12,
                   font=("Segoe UI", 11), cursor='hand2', bd=0,
                   activebackground='#505050', activeforeground='#ffffff')
@@ -214,7 +214,7 @@ class SimpleChatGUI:
         status_frame.pack_propagate(False)
         
         self.status_var = tk.StringVar()
-        self.status_var.set("Sẵn sàng")
+        self.status_var.set("🟢 Sẵn sàng")
         status_label = tk.Label(status_frame, textvariable=self.status_var, 
                  font=("Segoe UI", 9), fg='#808080', bg='#1a1a1a', anchor='w')
         status_label.pack(side=tk.LEFT, padx=10, pady=5)
@@ -229,8 +229,8 @@ class SimpleChatGUI:
         self.current_conv_id = str(uuid.uuid4()) # Tạo ID mới
         self.conversation_manager.clear_history() # Xóa bộ nhớ đệm
         self._clear_chat_display() # Xóa giao diện
-        self.status_var.set("Bắt đầu cuộc trò chuyện mới")
-        self._add_message("ai", "Xin chào! Bắt đầu cuộc trò chuyện mới.")
+        self.status_var.set("🟢 Bắt đầu cuộc trò chuyện mới")
+        self._add_message("ai", "Xin chào! 👋 Bắt đầu cuộc trò chuyện mới.")
         self._load_conversation_list() # Cập nhật danh sách
 
     def _load_conversation(self, conv_id):
@@ -270,7 +270,7 @@ class SimpleChatGUI:
             
         self.chat_text.config(state=tk.DISABLED)
         self.chat_text.see(tk.END)
-        self.status_var.set(f"Đã tải cuộc trò chuyện: {conv_id[:8]}...")
+        self.status_var.set(f"📂 Đã tải cuộc trò chuyện: {conv_id[:8]}...")
         self._load_conversation_list() # Cập nhật trạng thái active button
 
     def _load_conversation_list(self):
@@ -291,13 +291,13 @@ class SimpleChatGUI:
             # Kiểm tra xem đây có phải là cuộc trò chuyện hiện tại không
             is_active = (conv_id == self.current_conv_id)
             
-            # Tạo nút cho mỗi cuộc trò chuyện đơn giản
+            # Tạo nút cho mỗi cuộc trò chuyện với icon
             btn_bg = '#404040' if is_active else '#252525'  # Tối hơn khi active
             btn_fg = '#e0e0e0' if is_active else '#b0b0b0'  # Sáng hơn khi active
             btn_active_bg = '#505050'
             
             btn = tk.Button(self.conv_list_frame, 
-                            text=title, 
+                            text=f"💬 {title}", 
                             anchor="w", 
                             relief='flat', 
                             bg=btn_bg,
@@ -357,7 +357,7 @@ class SimpleChatGUI:
             self._start_new_conversation()
             
             # Cập nhật trạng thái
-            self.status_var.set("Đã xóa TẤT CẢ lịch sử chat và bắt đầu phiên mới.")
+            self.status_var.set("✅ Đã xóa TẤT CẢ lịch sử chat và bắt đầu phiên mới.")
 
     def _validate_config(self):
         # validate config from config.py
@@ -371,7 +371,7 @@ class SimpleChatGUI:
         # setup the AI model
         def init_model():
             try:
-                self.status_var.set("Đang tải model...")
+                self.status_var.set("⏳ Đang tải model...")
                 
                 # validate config first
                 if not self._validate_config():
@@ -395,8 +395,8 @@ class SimpleChatGUI:
     
     def _on_model_ready(self):
         # called when model is loaded
-        self.status_var.set("Sẵn sàng")
-        self._add_message("ai", "Xin chào! Tôi là trợ lý AI. Bạn có thể hỏi tôi bất cứ điều gì!")
+        self.status_var.set("🟢 Sẵn sàng")
+        self._add_message("ai", "Xin chào! 👋 Tôi là trợ lý AI. Bạn có thể hỏi tôi bất cứ điều gì!")
     
     def _on_send(self, event=None):
         # send button clicked or enter pressed
@@ -434,7 +434,7 @@ class SimpleChatGUI:
         response = None
         try:
             self.is_processing = True
-            self.root.after(0, lambda: self.status_var.set("AI đang suy nghĩ..."))
+            self.root.after(0, lambda: self.status_var.set("🔄 AI đang suy nghĩ..."))
             
             prompt = self.conversation_manager.build_prompt(user_input)
             response = self.model_wrapper.generate(prompt)
@@ -460,7 +460,7 @@ class SimpleChatGUI:
             self.root.after(0, lambda: self._add_message("ai", f"❌ Lỗi: {e}"))
         finally:
             self.is_processing = False
-            self.root.after(0, lambda: self.status_var.set("Sẵn sàng"))
+            self.root.after(0, lambda: self.status_var.set("🟢 Sẵn sàng"))
             
 # Trong file ui/gui_tk.py, thêm đoạn code này vào cuối class SimpleChatGUI
 
