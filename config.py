@@ -2,7 +2,7 @@
 # all settings in one place
 
 # model settings
-MODEL_PATH = "models/vietcuna-7b-v3.Q3_K_M.gguf"
+MODEL_PATH = "models/python.gguf"
 N_CTX = 2048          # context window size
 N_THREADS = 4         # cpu threads to use
 N_BATCH = 16          # batch size
