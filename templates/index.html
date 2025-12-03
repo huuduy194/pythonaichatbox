@@ -87,16 +87,24 @@
 </head>
 <body>
 
-    <div class="sidebar">
+<div class="sidebar">
         <div class="sidebar-header">
             <button class="new-chat-btn" onclick="startNewChat()">+ Cuộc trò chuyện mới</button>
         </div>
+        
         <div class="history-list" id="historyList">
             <div style="padding:10px; color:gray; font-style:italic">Đang tải lịch sử...</div>
         </div>
-        <div class="sidebar-footer">
-            <button class="icon-btn del-btn" onclick="clearAll()" style="flex:1">🗑️ Xóa tất cả</button>
-            <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
+        
+        <div class="sidebar-footer" style="flex-direction: column; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; color:var(--text-main); font-size:0.9rem; padding: 0 5px;">
+                <span>👤 {{ username }}</span>
+                <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Đổi giao diện">☀️</button>
+            </div>
+            <div style="display:flex; gap:5px">
+                <button class="icon-btn del-btn" onclick="clearAll()" style="flex:1" title="Xóa lịch sử">🗑️ Xóa</button>
+                <a href="/logout" class="icon-btn" style="text-decoration:none; text-align:center; background:#404040" title="Đăng xuất">🚪</a>
+            </div>
         </div>
     </div>
 

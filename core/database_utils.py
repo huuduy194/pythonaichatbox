@@ -1,114 +1,106 @@
 import os
 from pymongo import MongoClient
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
-# =================================================================
 # Cấu hình MongoDB
-# =================================================================
-# Cập nhật chuỗi kết nối của bạn tại đây
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/") 
 DB_NAME = "chat_ai_database"
-COLLECTION_NAME = "chat_history"
-# =================================================================
+COLLECTION_CHAT = "chat_history"
+COLLECTION_USERS = "users" 
 
 class MongoDBManager:
-    """Quản lý kết nối và thao tác với MongoDB."""
-    
     def __init__(self):
         self.client = None
         self.db = None
-        self.collection = None
+        self.chat_col = None
+        self.user_col = None
         self._connect()
         
     def _connect(self):
-        """Kết nối đến MongoDB server và chọn database/collection."""
         try:
             self.client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
             self.client.admin.command('ping') 
-            
             self.db = self.client[DB_NAME]
-            self.collection = self.db[COLLECTION_NAME]
-            
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Đã kết nối MongoDB thành công!")
-            
+            self.chat_col = self.db[COLLECTION_CHAT]
+            self.user_col = self.db[COLLECTION_USERS]
+            print(f"[{datetime.now()}] Đã kết nối MongoDB thành công!")
         except Exception as e:
-            print(f"Lỗi khi kết nối MongoDB tại {MONGO_URI}: {e}")
+            print(f"Lỗi kết nối MongoDB: {e}")
             self.client = None
-            raise ConnectionError(f"Không thể kết nối MongoDB: {e}")
 
-    def save_message(self, user_msg: str, assistant_resp: str, conv_id: str = "default_session"):
-        """Lưu tin nhắn người dùng và phản hồi của trợ lý vào collection."""
-        if not self.client:
-            return
+    # --- QUẢN LÝ USER ---
+    def register_user(self, username, password):
+        """Đăng ký user mới"""
+        if not self.client: return False, "Lỗi DB"
+        
+        if self.user_col.find_one({"username": username}):
+            return False, "Tài khoản đã tồn tại!"
+            
+        hashed_password = generate_password_hash(password)
+        self.user_col.insert_one({
+            "username": username,
+            "password": hashed_password,
+            "created_at": datetime.now()
+        })
+        return True, "Đăng ký thành công!"
 
+    def login_user(self, username, password):
+        """Kiểm tra đăng nhập"""
+        if not self.client: return False
+        
+        user = self.user_col.find_one({"username": username})
+        if user and check_password_hash(user['password'], password):
+            return True
+        return False
+
+    # --- QUẢN LÝ CHAT (Đã cập nhật để lọc theo user) ---
+    def save_message(self, user_msg, assistant_resp, conv_id, username):
+        """Lưu tin nhắn kèm theo username người sở hữu"""
+        if not self.client: return
         try:
-            message_document = {
+            doc = {
                 "timestamp": datetime.now(),
                 "user_message": user_msg,
                 "assistant_response": assistant_resp,
-                "conversation_id": conv_id
+                "conversation_id": conv_id,
+                "owner": username  # Quan trọng: Đánh dấu tin nhắn của ai
             }
-            
-            self.collection.insert_one(message_document)
-            
+            self.chat_col.insert_one(doc)
         except Exception as e:
-            print(f"Lỗi khi lưu tin nhắn vào MongoDB: {e}")
+            print(f"Lỗi lưu: {e}")
 
-    def get_conversation_list(self):
-        """
-        Lấy danh sách các Conversation ID duy nhất, sắp xếp theo thời gian tin nhắn cuối cùng
-        và gắn cho mỗi ID một tiêu đề/tin nhắn đầu tiên.
-        """
-        if not self.client:
-            return []
-            
+    def get_conversation_list(self, username):
+        """Lấy danh sách chat CỦA RIÊNG user đang đăng nhập"""
+        if not self.client: return []
         try:
             pipeline = [
-                # 1. Sắp xếp theo conversation_id và timestamp để đảm bảo thứ tự đúng
+                {"$match": {"owner": username}}, # Chỉ lấy tin nhắn của user này
                 {"$sort": {"conversation_id": 1, "timestamp": 1}},
-                # 2. Nhóm theo conversation_id, lấy tin nhắn đầu tiên và cuối cùng
                 {"$group": {
                     "_id": "$conversation_id",
                     "last_message_time": {"$max": "$timestamp"}, 
-                    "first_user_message": {"$first": "$user_message"}  # Lấy tin nhắn đầu tiên theo timestamp
+                    "first_user_message": {"$first": "$user_message"}
                 }},
-                # 3. Sắp xếp giảm dần theo thời gian tin nhắn cuối cùng
                 {"$sort": {"last_message_time": -1}},
-                # 4. Định hình lại output
                 {"$project": {
-                    "_id": 0, 
-                    "id": "$_id",
-                    # Cắt bớt tiêu đề (tối đa 40 ký tự)
+                    "_id": 0, "id": "$_id",
                     "title": {"$substrCP": ["$first_user_message", 0, 40]}, 
                     "last_activity": "$last_message_time"
                 }}
             ]
-            
-            return list(self.collection.aggregate(pipeline))
-            
-        except Exception as e:
-            print(f"Lỗi khi lấy danh sách cuộc trò chuyện MongoDB: {e}")
-            return []
+            return list(self.chat_col.aggregate(pipeline))
+        except Exception: return []
 
-    def get_messages_by_conversation_id(self, conv_id: str):
-        """Lấy tất cả tin nhắn của một cuộc trò chuyện cụ thể."""
-        if not self.client:
-            return []
-            
-        try:
-            return list(self.collection.find({"conversation_id": conv_id}).sort("timestamp", 1))
-        except Exception as e:
-            print(f"Lỗi khi lấy tin nhắn theo ID: {e}")
-            return []
-    # THÊM PHƯƠNG THỨC MỚI NÀY VÀO CUỐI CLASS
-    def delete_all_conversations(self):
-        """Xóa tất cả tin nhắn khỏi collection."""
-        if not self.client:
-            return
-            
-        try:
-            # Xóa tất cả tài liệu
-            result = self.collection.delete_many({})
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Đã xóa {result.deleted_count} lịch sử hội thoại")
-        except Exception as e:
-            print(f"Lỗi khi xóa TẤT CẢ cuộc trò chuyện khỏi MongoDB: {e}")
+    def get_messages_by_conversation_id(self, conv_id, username):
+        """Lấy nội dung chat (bảo mật: phải đúng chủ sở hữu)"""
+        if not self.client: return []
+        return list(self.chat_col.find({
+            "conversation_id": conv_id,
+            "owner": username
+        }).sort("timestamp", 1))
+
+    def delete_all_conversations(self, username):
+        """Xóa lịch sử của riêng user"""
+        if self.client:
+            self.chat_col.delete_many({"owner": username})

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - AI Chatbox</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #2d2d2d; padding: 40px; border-radius: 12px; width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; transition: height 0.3s; }
+        h2 { margin-bottom: 25px; color: #e0e0e0; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        input { width: 100%; padding: 12px; background: #404040; border: 1px solid #505050; color: white; border-radius: 6px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input:focus { border-color: #007acc; }
+        
+        /* Ẩn hiện input với hiệu ứng */
+        .hidden-input { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .visible-input { display: block; opacity: 1; }
+
+        button { width: 100%; padding: 12px; margin-top: 10px; background: #007acc; border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.2s; }
+        button:hover { background: #0062a3; }
+        
+        .switch-btn { background: transparent; color: #888; font-size: 0.9rem; margin-top: 15px; }
+        .switch-btn:hover { color: white; text-decoration: underline; background: transparent; }
+        
+        .error { color: #ff4d4f; font-size: 0.85rem; margin-top: 10px; display: none; background: rgba(255, 77, 79, 0.1); padding: 8px; border-radius: 4px; }
+        
+        .hint { font-size: 0.75rem; color: #888; margin-top: 4px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2 id="title">🔐 Đăng Nhập</h2>
+        
+        <div class="input-group">
+            <input type="text" id="username" placeholder="Tên đăng nhập">
+        </div>
+        
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Mật khẩu">
+            <div id="passHint" class="hint">Mật khẩu cần > 6 ký tự, gồm chữ và số</div>
+        </div>
+        
+        <div class="input-group hidden-input" id="confirmContainer">
+            <input type="password" id="confirmPassword" placeholder="Xác nhận lại mật khẩu">
+        </div>
+        
+        <div id="errorMsg" class="error"></div>
+        
+        <button onclick="handleSubmit()" id="submitBtn">Đăng Nhập</button>
+        <button class="switch-btn" onclick="toggleMode()" id="switchBtn">Chưa có tài khoản? Đăng ký ngay</button>
+    </div>
+
+    <script>
+        let isLogin = true;
+        const errorDiv = document.getElementById('errorMsg');
+        const confirmContainer = document.getElementById('confirmContainer');
+        const passHint = document.getElementById('passHint');
+
+        function toggleMode() {
+            isLogin = !isLogin;
+            
+            // Cập nhật giao diện
+            document.getElementById('title').innerText = isLogin ? "🔐 Đăng Nhập" : "📝 Đăng Ký";
+            document.getElementById('submitBtn').innerText = isLogin ? "Đăng Nhập" : "Đăng Ký";
+            document.getElementById('switchBtn').innerText = isLogin ? "Chưa có tài khoản? Đăng ký ngay" : "Đã có tài khoản? Đăng nhập";
+            
+            // Ẩn/Hiện ô xác nhận mật khẩu và gợi ý
+            if (isLogin) {
+                confirmContainer.classList.remove('visible-input');
+                confirmContainer.classList.add('hidden-input');
+                passHint.style.display = 'none';
+            } else {
+                confirmContainer.classList.remove('hidden-input');
+                confirmContainer.classList.add('visible-input');
+                passHint.style.display = 'block';
+            }
+            
+            // Xóa lỗi cũ
+            errorDiv.style.display = 'none';
+        }
+
+        async function handleSubmit() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // --- VALIDATION PHÍA CLIENT (Cho nhanh) ---
+            if(!username || !password) {
+                return showError("Vui lòng nhập đầy đủ thông tin!");
+            }
+
+            if (!isLogin) {
+                // Các kiểm tra chỉ dành cho Đăng ký
+                if (username.length < 3) {
+                    return showError("Tên đăng nhập quá ngắn (phải >= 3 ký tự).");
+                }
+                
+                // Regex: Có chữ và số, dài hơn 6
+                const strongRegex = new RegExp("^(?=.*[a-zA-Z])(?=.*[0-9])(?=.{6,})");
+                if (!strongRegex.test(password)) {
+                    return showError("Cần ít nhất 6 ký tự, gồm cả chữ và số.");
+                }
+
+                if (password !== confirmPassword) {
+                    return showError("Mật khẩu xác nhận không khớp!");
+                }
+            }
+
+            // Gửi dữ liệu
+            const endpoint = isLogin ? '/login' : '/register';
+            const payload = { username, password };
+            
+            // Nếu là đăng ký thì gửi thêm confirm_password
+            if (!isLogin) payload.confirm_password = confirmPassword;
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                if(data.status === 'success') {
+                    if(isLogin) {
+                        window.location.href = '/'; 
+                    } else {
+                        alert("✅ Đăng ký thành công! Vui lòng đăng nhập.");
+                        toggleMode(); // Chuyển về form đăng nhập
+                    }
+                } else {
+                    showError(data.msg);
+                }
+            } catch (e) { showError("Lỗi kết nối server!"); }
+        }
+
+        function showError(msg) {
+            errorDiv.innerText = msg;
+            errorDiv.style.display = 'block';
+        }
+        
+        // Hỗ trợ bấm Enter
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleSubmit();
+        });
+    </script>
+</body>
+</html>
