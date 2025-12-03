@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbox Pro</title>
+    <style>
+        /* --- 1. VARIABLES --- */
+        :root {
+            --bg-body: #1a1a1a;
+            --bg-sidebar: #202020;
+            --bg-chat: #2d2d2d;
+            --hover-item: #333333;
+            --text-main: #e0e0e0;
+            --text-sub: #9ca3af;
+            --border: #404040;
+            --msg-user: #007acc;
+            --msg-bot: #404040;
+        }
+        [data-theme="light"] {
+            --bg-body: #f3f4f6;
+            --bg-sidebar: #ffffff;
+            --bg-chat: #ffffff;
+            --hover-item: #f3f4f6;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --border: #e5e7eb;
+            --msg-user: #2563eb;
+            --msg-bot: #f3f4f6;
+        }
+
+        /* --- 2. LAYOUT --- */
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; background: var(--bg-body); color: var(--text-main); overflow: hidden; }
+        
+        /* SIDEBAR (Bên trái) */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
+        }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .new-chat-btn {
+            width: 100%; padding: 12px; background: var(--msg-user); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .new-chat-btn:hover { opacity: 0.9; }
+        
+        .history-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .history-item {
+            padding: 10px 12px; margin-bottom: 4px; border-radius: 6px;
+            cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--text-sub); font-size: 0.9rem;
+        }
+        .history-item:hover { background: var(--hover-item); color: var(--text-main); }
+        
+        .sidebar-footer { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+
+        /* MAIN CHAT (Bên phải) */
+        .main-chat { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); position: relative; }
+        
+        .chat-header {
+            padding: 15px 20px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-chat);
+        }
+        
+        .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .message { max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; font-size: 0.95rem; }
+        .user { align-self: flex-end; background: var(--msg-user); color: white; border-bottom-right-radius: 2px; }
+        .bot { align-self: flex-start; background: var(--msg-bot); color: var(--text-main); border-bottom-left-radius: 2px; }
+
+        .input-area { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--bg-chat); }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-main); outline: none; }
+        
+        /* Utility Buttons */
+        .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px; border-radius: 6px; cursor: pointer; }
+        .icon-btn:hover { background: var(--hover-item); }
+        .del-btn { color: #ef4444; border-color: #ef4444; }
+        .del-btn:hover { background: #fee2e2; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-btn" onclick="startNewChat()">+ Cuộc trò chuyện mới</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <div style="padding:10px; color:gray; font-style:italic">Đang tải lịch sử...</div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="icon-btn del-btn" onclick="clearAll()" style="flex:1">🗑️ Xóa tất cả</button>
+            <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
+        </div>
+    </div>
+
+    <div class="main-chat">
+        <div class="chat-header">
+            <h3 style="margin:0">🤖 Chatbox AI</h3>
+        </div>
+        
+        <div class="chat-box" id="chatBox">
+            <div class="message bot">Xin chào! Bạn muốn hỏi gì hôm nay?</div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+            <button class="new-chat-btn" style="width:auto" onclick="sendMessage()">Gửi ➤</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const historyList = document.getElementById('historyList');
+
+        // --- 1. QUẢN LÝ LỊCH SỬ ---
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const list = await res.json();
+                
+                historyList.innerHTML = '';
+                if(list.length === 0) {
+                    historyList.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-sub)">Chưa có lịch sử</div>';
+                    return;
+                }
+
+                list.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerText = item.title || "Cuộc trò chuyện không tên";
+                    div.onclick = () => loadConversation(item.id);
+                    historyList.appendChild(div);
+                });
+            } catch (e) { console.error("Lỗi tải history:", e); }
+        }
+
+        async function loadConversation(id) {
+            chatBox.innerHTML = '<div style="text-align:center; padding:20px">⏳ Đang tải...</div>';
+            try {
+                const res = await fetch(`/api/load_chat/${id}`);
+                const messages = await res.json();
+                
+                chatBox.innerHTML = ''; // Xóa loading
+                if(messages.length === 0) {
+                    chatBox.innerHTML = '<div class="message bot">Cuộc trò chuyện này trống.</div>';
+                }
+                messages.forEach(msg => appendMessage(msg.content, msg.role));
+            } catch (e) {
+                chatBox.innerHTML = '<div class="message bot">❌ Lỗi tải cuộc trò chuyện</div>';
+            }
+        }
+
+        async function startNewChat() {
+            await fetch('/new_chat', {method: 'POST'});
+            chatBox.innerHTML = '<div class="message bot">Bắt đầu cuộc trò chuyện mới! 👋</div>';
+            loadHistory(); // Refresh list
+        }
+
+        async function clearAll() {
+            if(confirm("Bạn chắc chắn muốn XÓA TOÀN BỘ lịch sử?")) {
+                await fetch('/clear_all', {method: 'POST'});
+                startNewChat();
+            }
+        }
+
+        // --- 2. XỬ LÝ CHAT ---
+        function appendMessage(text, role) {
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.innerText = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            appendMessage(text, 'user');
+            userInput.value = '';
+            
+            // Nếu đây là tin nhắn đầu tiên, hãy refresh sidebar sau 1 chút
+            const isFirstMessage = chatBox.children.length <= 2;
+
+            try {
+                const res = await fetch('/get_response', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({msg: text})
+                });
+                const data = await res.json();
+                appendMessage(data.response, 'bot');
+                
+                if(isFirstMessage) setTimeout(loadHistory, 1000);
+                
+            } catch (e) { appendMessage("Lỗi kết nối!", 'bot'); }
+        }
+
+        function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+
+        // --- 3. THEME ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            document.getElementById('themeBtn').innerText = isDark ? '🌙' : '☀️';
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+        
+        // Init
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+        loadHistory(); // Tải lịch sử khi mở web
+    </script>
+</body>
+</html>
