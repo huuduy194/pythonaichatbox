@@ -1,3 +1,4 @@
+#Flask: tạo ứng dụng web; render_template: trả về file HTML; session: lưu trạng thái đăng nhập; redirect, url_for: chuyển hướng trang web
 import re
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import config
@@ -159,6 +160,37 @@ def clear_all_db():
 def open_browser():
     time.sleep(1.5)
     webbrowser.open_new("http://localhost:5000")
+
+# --- THÊM ROUTE XỬ LÝ SETTINGS ---
+@app.route("/api/settings", methods=["GET", "POST"])
+def handle_settings():
+    if 'user' not in session:
+        return jsonify({"status": "error", "msg": "Chưa đăng nhập"}), 401
+        
+    if request.method == "GET":
+        # Lấy cấu hình hiện tại từ model wrapper
+        current_config = model_wrapper.get_config()
+        # Chỉ trả về các tham số an toàn để chỉnh sửa
+        return jsonify({
+            "temperature": current_config.get("temperature", 0.7),
+            "max_tokens": current_config.get("max_tokens", 256),
+            "top_p": current_config.get("top_p", 0.9)
+        })
+        
+    if request.method == "POST":
+        new_settings = request.json
+        try:
+            # Chuyển đổi kiểu dữ liệu cho chắc chắn
+            clean_settings = {
+                "temperature": float(new_settings.get("temperature", 0.7)),
+                "max_tokens": int(new_settings.get("max_tokens", 256)),
+                "top_p": float(new_settings.get("top_p", 0.9))
+            }
+            # Cập nhật vào model wrapper
+            model_wrapper.update_config(clean_settings)
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"status": "error", "msg": str(e)})
 
 if __name__ == "__main__":
     threading.Thread(target=open_browser).start()

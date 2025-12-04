@@ -99,7 +99,7 @@
                 // Regex: Có chữ và số, dài hơn 6
                 const strongRegex = new RegExp("^(?=.*[a-zA-Z])(?=.*[0-9])(?=.{6,})");
                 if (!strongRegex.test(password)) {
-                    return showError("Cần ít nhất 6 ký tự, gồm cả chữ và số.");
+                    return showError("Mật khẩu yếu! Cần ít nhất 6 ký tự, gồm cả chữ và số.");
                 }
 
                 if (password !== confirmPassword) {
